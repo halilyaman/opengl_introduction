@@ -61,14 +61,27 @@ int main(void)
     glViewport(0, 0, 640, 480);
 
     float vertices[] = {
-         0.5f,  0.5f, 0.0f, // top right
-         0.5f, -0.5f, 0.0f, // bottom right
-        -0.5f, -0.5f, 0.0f, // bottom left
-        -0.5f,  0.5f, 0.0f, // top left
+         0.05f,  0.8f, 0.0f, // top right of central line
+         0.05f, -0.5f, 0.0f, // bottom right of central line
+        -0.05f, -0.5f, 0.0f, // bottom left of central line
+        -0.05f,  0.8f, 0.0f, // top left of central line
+
+         0.6f,  0.8f, 0.0f, // top right of upper line of F
+         0.05f,  0.65f, 0.0f, // bottom left of upper line of F
+         0.6f,  0.65f, 0.0f, // bottom right of upper line of F
+
+         0.4f,  0.4f, 0.0f, // top right of lower line of F
+         0.05f,  0.25f, 0.0f, // bottom left of lower line of F
+         0.4f,  0.25f, 0.0f, // bottom right of lower line of F
+         0.05f,  0.4f, 0.0f, // top left of lower line of F
     };
     unsigned int indices[] = {
         0, 1, 3, // first triangle
         1, 2, 3, // second triangle
+        0, 4, 5,
+        4, 5, 6,
+        7, 8, 10,
+        7, 8, 9,
     };
 
     // Vertex Array Object
@@ -137,7 +150,8 @@ int main(void)
         glUseProgram(shader_program);
         // bind vertex array object
         glBindVertexArray(vao);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         /* Swap front and back buffers */
