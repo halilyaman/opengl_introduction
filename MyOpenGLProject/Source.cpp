@@ -64,21 +64,30 @@ int main(void)
 
     glViewport(0, 0, 640, 480);
 
+    // F
     float vertices[] = {
-         0.05f,  0.8f, 0.0f, // top right of central line
-         0.05f, -0.5f, 0.0f, // bottom right of central line
-        -0.05f, -0.5f, 0.0f, // bottom left of central line
-        -0.05f,  0.8f, 0.0f, // top left of central line
+         0.05f,  0.8f, 0.0f,  1.0f, 0.0f, 0.0f, // top right of central line
+         0.05f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f, // bottom right of central line
+        -0.05f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f, // bottom left of central line
+        -0.05f,  0.8f, 0.0f,  0.0f, 1.0f, 0.0f, // top left of central line
 
-         0.6f,  0.8f, 0.0f, // top right of upper line of F
-         0.05f,  0.65f, 0.0f, // bottom left of upper line of F
-         0.6f,  0.65f, 0.0f, // bottom right of upper line of F
+         0.6f,  0.8f, 0.0f,   0.0f, 1.0f, 0.0f, // top right of upper line of F
+         0.05f, 0.65f, 0.0f,  0.0f, 0.0f, 1.0f, // bottom left of upper line of F
+         0.6f,  0.65f, 0.0f,  1.0f, 0.0f, 0.0f, // bottom right of upper line of F
 
-         0.4f,  0.4f, 0.0f, // top right of lower line of F
-         0.05f,  0.25f, 0.0f, // bottom left of lower line of F
-         0.4f,  0.25f, 0.0f, // bottom right of lower line of F
-         0.05f,  0.4f, 0.0f, // top left of lower line of F
+         0.4f,  0.4f,  0.0f,  1.0f, 0.0f, 0.0f, // top right of lower line of F
+         0.05f, 0.25f, 0.0f,  0.0f, 1.0f, 0.0f, // bottom left of lower line of F
+         0.4f,  0.25f, 0.0f,  0.0f, 0.0f, 1.0f, // bottom right of lower line of F
+         0.05f,  0.4f, 0.0f,  1.0f, 0.0f, 0.0f, // top left of lower line of F
     };
+
+    // Triangle
+    /*float vertices[] = {
+         0.00f,  0.02f, 0.0f,  1.0f, 0.0f, 0.0f,
+         0.02f, -0.02f, 0.0f,  0.0f, 1.0f, 0.0f,
+        -0.02f, -0.02f, 0.0f,  0.0f, 0.0f, 1.0f,
+    };*/
+
     unsigned int indices[] = {
         0, 1, 3,
         1, 2, 3,
@@ -87,6 +96,10 @@ int main(void)
         7, 8, 10,
         7, 8, 9,
     };
+
+    /*unsigned int indices[] = {
+        0, 1, 2
+    };*/
 
     // Vertex Array Object
     unsigned int vao;
@@ -105,8 +118,13 @@ int main(void)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+    // color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     /*
     Swizzling:
@@ -123,13 +141,13 @@ int main(void)
     // create and compile vertex shader
     const char* kVertexShaderSource =
         "#version 330 core\n"
-        "layout (location = 0)\n"
-        "in vec3 aPos;\n"
-        "out vec4 vertexColor;\n"
+        "layout (location = 0) in vec3 aPos;\n"
+        "layout (location = 1) in vec3 aColor;\n"
+        "out vec3 ourColor;\n"
         "void main()\n"
         "{\n"
         "   gl_Position = vec4(aPos, 1.0);\n"
-        "   vertexColor = vec4(0.5, 0.0, 0.0, 1.0);\n"
+        "   ourColor = aColor;\n"
         "}\0";
     unsigned int vertex_shader;
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -141,10 +159,10 @@ int main(void)
     const char* kFragmentShaderSource =
         "#version 330 core\n"
         "out vec4 FragColor;\n"
-        "uniform vec4 ourColor;\n"
+        "in vec3 ourColor;\n"
         "void main()\n"
         "{\n"
-        "   FragColor = ourColor;\n"
+        "   FragColor = vec4(ourColor, 1.0f);\n"
         "}\0";
     unsigned int fragment_shader;
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -167,11 +185,13 @@ int main(void)
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        glUseProgram(shader_program);
+
         float time_value = glfwGetTime();
         float green_value = (sin(time_value) / 2.0f) + 0.5f;
         int vertex_color_location = glGetUniformLocation(shader_program, "ourColor");
-        glUseProgram(shader_program);
-        glUniform4f(vertex_color_location, 0.0f, green_value, 0.0f, 1.0f);
+        glUniform4f(vertex_color_location, 1.0f - green_value, 0.0f, green_value, 1.0f);
+
         // bind vertex array object
         glBindVertexArray(vao);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
