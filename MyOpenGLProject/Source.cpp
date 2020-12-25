@@ -141,10 +141,10 @@ int main(void)
     const char* kFragmentShaderSource =
         "#version 330 core\n"
         "out vec4 FragColor;\n"
-        "in vec4 vertexColor;\n"
+        "uniform vec4 ourColor;\n"
         "void main()\n"
         "{\n"
-        "   FragColor = vertexColor;\n"
+        "   FragColor = ourColor;\n"
         "}\0";
     unsigned int fragment_shader;
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -167,7 +167,11 @@ int main(void)
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        float time_value = glfwGetTime();
+        float green_value = (sin(time_value) / 2.0f) + 0.5f;
+        int vertex_color_location = glGetUniformLocation(shader_program, "ourColor");
         glUseProgram(shader_program);
+        glUniform4f(vertex_color_location, 0.0f, green_value, 0.0f, 1.0f);
         // bind vertex array object
         glBindVertexArray(vao);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
