@@ -58,6 +58,10 @@ int main(void)
         std::cout << "Error!" << std::endl;
     std::cout << glGetString(GL_VERSION) << std::endl;
 
+    int nrAttributes;
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
+    std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes << std::endl;
+
     glViewport(0, 0, 640, 480);
 
     float vertices[] = {
@@ -76,8 +80,8 @@ int main(void)
          0.05f,  0.4f, 0.0f, // top left of lower line of F
     };
     unsigned int indices[] = {
-        0, 1, 3, // first triangle
-        1, 2, 3, // second triangle
+        0, 1, 3,
+        1, 2, 3,
         0, 4, 5,
         4, 5, 6,
         7, 8, 10,
@@ -104,13 +108,28 @@ int main(void)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    /*
+    Swizzling:
+    vec2 someVec;
+    vec4 differentVec = someVec.xyxx;
+    vec3 anotherVec = differentVec.zyw;
+    vec4 otherVec = someVec.xxxx + anotherVec.yxzy;
+
+    vec2 vect = vec2(0.5, 0.7);
+    vec4 result = vec4(vect, 0.0, 0.0);
+    vec4 otherResult = vec4(result.xyz, 1.0);
+    */
+
     // create and compile vertex shader
     const char* kVertexShaderSource =
         "#version 330 core\n"
-        "layout (location = 0) in vec3 aPos;\n"
+        "layout (location = 0)\n"
+        "in vec3 aPos;\n"
+        "out vec4 vertexColor;\n"
         "void main()\n"
         "{\n"
-        "   gl_Position = vec4(aPos, 1.0);"
+        "   gl_Position = vec4(aPos, 1.0);\n"
+        "   vertexColor = vec4(0.5, 0.0, 0.0, 1.0);\n"
         "}\0";
     unsigned int vertex_shader;
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -122,9 +141,10 @@ int main(void)
     const char* kFragmentShaderSource =
         "#version 330 core\n"
         "out vec4 FragColor;\n"
+        "in vec4 vertexColor;\n"
         "void main()\n"
         "{\n"
-        "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+        "   FragColor = vertexColor;\n"
         "}\0";
     unsigned int fragment_shader;
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
