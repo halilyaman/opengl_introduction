@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include "Shader.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 int main(void)
 {
@@ -31,42 +33,43 @@ int main(void)
 
     Shader my_shader("shader.vert", "shader.frag");
 
-    // F
+    
+    // generate and bind texture object
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    // set the texture wrapping/filtering options (on the currently bounded texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load and generate the texture
+    int width, height, nr_channels;
+    unsigned char* data = stbi_load("container.jpg", &width, &height, &nr_channels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+
+    // Rectangle
     float vertices[] = {
-         0.05f,  0.8f, 0.0f,  1.0f, 0.0f, 0.0f, // top right of central line
-         0.05f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f, // bottom right of central line
-        -0.05f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f, // bottom left of central line
-        -0.05f,  0.8f, 0.0f,  0.0f, 1.0f, 0.0f, // top left of central line
-
-         0.6f,  0.8f, 0.0f,   0.0f, 1.0f, 0.0f, // top right of upper line of F
-         0.05f, 0.65f, 0.0f,  0.0f, 0.0f, 1.0f, // bottom left of upper line of F
-         0.6f,  0.65f, 0.0f,  1.0f, 0.0f, 0.0f, // bottom right of upper line of F
-
-         0.4f,  0.4f,  0.0f,  1.0f, 0.0f, 0.0f, // top right of lower line of F
-         0.05f, 0.25f, 0.0f,  0.0f, 1.0f, 0.0f, // bottom left of lower line of F
-         0.4f,  0.25f, 0.0f,  0.0f, 0.0f, 1.0f, // bottom right of lower line of F
-         0.05f,  0.4f, 0.0f,  1.0f, 0.0f, 0.0f, // top left of lower line of F
+        // positions          // colors           // texture coords
+        0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
+        0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
+       -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
+       -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
     };
-
-    // Triangle
-    /*float vertices[] = {
-         0.00f,  0.02f, 0.0f,  1.0f, 0.0f, 0.0f,
-         0.02f, -0.02f, 0.0f,  0.0f, 1.0f, 0.0f,
-        -0.02f, -0.02f, 0.0f,  0.0f, 0.0f, 1.0f,
-    };*/
 
     unsigned int indices[] = {
         0, 1, 3,
         1, 2, 3,
-        0, 4, 5,
-        4, 5, 6,
-        7, 8, 10,
-        7, 8, 9,
     };
-
-    /*unsigned int indices[] = {
-        0, 1, 2
-    };*/
 
     unsigned int vao, vbo, ebo;
 
@@ -85,12 +88,16 @@ int main(void)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    // texture attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     /*
     Swizzling:
@@ -111,13 +118,13 @@ int main(void)
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        my_shader.Use();
+        // bind texture
+        glBindTexture(GL_TEXTURE_2D, texture);
 
-        // bind vertex array object
+        // render container
+        my_shader.Use();
         glBindVertexArray(vao);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
 
         /* Swap front and back buffers */
         // front buffer contains the final output image that is shown at the screen
@@ -131,6 +138,7 @@ int main(void)
 
     // de-allocate all resources 
     glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
     glDeleteBuffers(1, &ebo);
 
     // clear all previously allocated glfw sources
